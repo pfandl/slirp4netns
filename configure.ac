@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([slirp4netns], [1.1.12+dev], [https://github.com/rootless-containers/slirp4netns/issues])
+AC_INIT([slirp4netns], [1.1.13+dev], [https://github.com/rootless-containers/slirp4netns/issues])
 AC_CONFIG_SRCDIR([main.c])
 AC_CONFIG_HEADERS([config.h])
 
@@ -36,6 +36,7 @@ PKG_CHECK_MODULES(GLIB, glib-2.0)
 PKG_CHECK_MODULES(SLIRP, slirp >= 4.1.0)
 PKG_CHECK_MODULES(LIBCAP, libcap)
 PKG_CHECK_MODULES(LIBSECCOMP, libseccomp)
+PKG_CHECK_MODULES(LIBCRYPTO, libcrypto)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
