@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/timex.h>
+#include <time.h>
 #include <linux/if_tun.h>
 #include <arpa/inet.h>
 #include <net/if.h>
@@ -222,11 +223,12 @@ struct in6_ifreq {
 
 static const char *pseudo_random_global_id(const char *device)
 {
-    static char id[40];
-    char tmp[40];
+    static char id[INET6_ADDRSTRLEN];
+    char tmp[INET6_ADDRSTRLEN - 10];
     unsigned char eui64[16];
     unsigned char hash[SHA_DIGEST_LENGTH];
     struct ntptimeval ntv;
+    time_t tv;
     struct ifreq ifr;
     unsigned char mac[18];
     int sockfd;
@@ -246,16 +248,19 @@ static const char *pseudo_random_global_id(const char *device)
     strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name) - 1);
 
     if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0) {
-	int rand = open("/dev/urandom", O_RDONLY);
-	if (rand == -1) {
-	    rand = open("/dev/random", O_RDONLY);
-	}
-	if (rand == -1) {
+        int rand = open("/dev/urandom", O_RDONLY);
+        if (rand == -1) {
+            rand = open("/dev/random", O_RDONLY);
+        }
+        if (rand == -1) {
             perror("cannot get dev hwaddr and cannot open random");
             return NULL;
-	}
-	read(rand, &mac, sizeof(mac));
-	close(rand);
+        }
+        if (read(rand, &mac, sizeof(mac)) != sizeof(mac)) {
+            perror("cannot get dev hwaddr and cannot read random");
+            return NULL;
+        }
+        close(rand);
     }
     else {
         strncpy(mac, ifr.ifr_ifru.ifru_addr.sa_data, sizeof(mac));
@@ -269,10 +274,10 @@ static const char *pseudo_random_global_id(const char *device)
     /*
      * 1) Obtain the current time of day in 64-bit NTP format [NTP].
      */
-    if (ntp_gettime(&ntv) == -1) {
-        perror("cannot get ntp time");
-        return NULL;
-    }
+    time(&tv);
+    ntv.time.tv_sec = tv;
+    // TODO: check NTP format
+    ntv.time.tv_usec = 0;
 
     /*
      * 2) Obtain an EUI-64 identifier from the system running this
@@ -320,7 +325,7 @@ static const char *pseudo_random_global_id(const char *device)
      *    ID to create a Local IPv6 address prefix.
      */
 
-    sprintf(id, "fd00:%s::/64", tmp);
+    snprintf(id, sizeof(id), "fd00:%s::/64", tmp);
 
     return id;
 }
@@ -1032,11 +1037,11 @@ static int parse_cidr6(struct in6_addr *network, struct in6_addr *netmask,
 
     for (int i = 0; i < 4; i++, prefix -= 32) {
         if (prefix >= 32) {
-            netmask->__in6_u.__u6_addr32[i] = 0xffffffff;
+            netmask->s6_addr32[i] = 0xffffffff;
         } else if (prefix > 0) {
-            netmask->__in6_u.__u6_addr32[i] = htonl(~((1 << (32 - prefix)) - 1));
+            netmask->s6_addr32[i] = htonl(~((1 << (32 - prefix)) - 1));
         } else {
-            netmask->__in6_u.__u6_addr32[i] = 0;
+            netmask->s6_addr32[i] = 0;
         }
     }
 
