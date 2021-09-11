@@ -39,6 +39,7 @@ Container engines:
 * [Buildah](https://github.com/containers/buildah)
 * [ctnr](https://github.com/mgoltzsche/ctnr) (via slirp-cni-plugin)
 * [Docker & Moby](https://get.docker.com/rootless) (optionally, via RootlessKit)
+* [containerd/nerdctl](https://github.com/containerd/nerdctl) (optionally, via RootlessKit)
 
 Tools:
 * [RootlessKit](https://github.com/rootless-containers/rootlesskit)
@@ -78,7 +79,7 @@ Also available as a package on almost all Linux distributions:
 * [Gentoo Linux](https://packages.gentoo.org/packages/app-emulation/slirp4netns)
 * [Slackware](https://git.slackbuilds.org/slackbuilds/tree/network/slirp4netns)
 * [Void Linux](https://github.com/void-linux/void-packages/tree/master/srcpkgs/slirp4netns)
-* [Alpine Linux (edge)](https://pkgs.alpinelinux.org/package/edge/testing/x86/slirp4netns)
+* [Alpine Linux (since 3.14)](https://pkgs.alpinelinux.org/packages?name=slirp4netns)
 
 e.g.
 

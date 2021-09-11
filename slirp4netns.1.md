@@ -1,4 +1,4 @@
-SLIRP4NETNS 1 "November 2020" "Rootless Containers" "User Commands"
+SLIRP4NETNS 1 "June 2021" "Rootless Containers" "User Commands"
 ==================================================
 
 # NAME
@@ -21,6 +21,8 @@ Default configuration:
 * CIDR:              10.0.2.0/24
 * Gateway/Host:      10.0.2.2    (network address + 2)
 * DNS:               10.0.2.3    (network address + 3)
+* DHCP begin:        10.0.2.15   (network address + 15)
+* DHCP end:          10.0.2.30   (network address + 30)
 * IPv6 CIDR:         fd00::/64
 * IPv6 Gateway/Host: fd00::2
 * IPv6 DNS:          fd00::3
@@ -198,7 +200,7 @@ However, a host loopback address might be still accessible via the built-in DNS 
 You may want to set up iptables for limiting access to the built-in DNS in such a case.
 
 ```console
-(host)$ nsenter -t $(cat /tmp/pid) -U -n
+(host)$ nsenter -t $(cat /tmp/pid) -U --preserve-credentials -n
 (namespace)$ iptables -A OUTPUT -d 10.0.2.3 -p udp --dport 53 -j ACCEPT
 (namespace)$ iptables -A OUTPUT -d 10.0.2.3 -j DROP
 ```
@@ -286,7 +288,7 @@ Optionally you can use interface names instead of ip addresses.
 The easiest way to allow inter-namespace communication is to nest network namespaces inside the slirp4netns's network namespace.
 
 ```console
-(host)$ nsenter -t $(cat /tmp/pid) -U -n -m
+(host)$ nsenter -t $(cat /tmp/pid) -U --preserve-credentials -n -m
 (namespace)$ mount -t tmpfs none /run
 (namespace)$ ip netns add foo
 (namespace)$ ip netns add bar
@@ -310,12 +312,12 @@ To allow communication across multiple slirp4netns instances, you need to combin
 
 ```console
 (host)$ vde_plug --daemon switch:///tmp/switch null://
-(host)$ nsenter -t $(cat /tmp/pid-instance0) -U -n
+(host)$ nsenter -t $(cat /tmp/pid-instance0) -U --preserve-credentials -n
 (namespace-instance0)$ vde_plug --daemon vde:///tmp/switch tap://vde
 (namespace-instance0)$ ip link set vde up
 (namespace-instance0)$ ip addr add 192.168.42.100/24 dev vde
 (namespace-instance0)$ exit
-(host)$ nsenter -t $(cat /tmp/pid-instance1) -U -n
+(host)$ nsenter -t $(cat /tmp/pid-instance1) -U --preserve-credentials -n
 (namespace-instance1)$ vde_plug --daemon vde:///tmp/switch tap://vde
 (namespace-instance1)$ ip link set vde up
 (namespace-instance1)$ ip addr add 192.168.42.101/24 dev vde
@@ -336,7 +338,7 @@ As a workaround, you can adjust the value of `/proc/sys/net/ipv4/tcp_rmem` insid
 No real root privilege is needed to modify the file since kernel 4.15.
 
 ```console
-(host)$ nsenter -t $(cat /tmp/pid) -U -n -m
+(host)$ nsenter -t $(cat /tmp/pid) -U --preserve-credentials -n -m
 (namespace)$ c=$(cat /proc/sys/net/ipv4/tcp_rmem); echo $c | sed -e s/131072/87380/g > /proc/sys/net/ipv4/tcp_rmem
 ```
 
